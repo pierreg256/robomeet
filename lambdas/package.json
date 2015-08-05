@@ -1,0 +1,15 @@
+{
+  "name": "lambdas",
+  "version": "0.0.0",
+  "description": "",
+  "main": "robomeet-hello-app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "adm-zip": "^0.4.7",
+    "dynamodb-doc": "^1.0.0"
+  }
+}
