@@ -1,6 +1,11 @@
 var aws = require('aws-sdk')
   , utils = require('./utils')
-  , s3 = new aws.S3();
+  , s3 = new aws.S3()
+  , csd = new aws.CloudSearchDomain({
+  		region: 'eu-west-1',
+		endpoint: 'doc-skin-of-sorrow-44fz4hrlhyf2mrxg6ufx77n35q.eu-west-1.cloudsearch.amazonaws.com'
+	})
+  ;
 
   var credentialsSuffix = '/credentials.json'
     , profileSuffix = '/profile.json';
@@ -41,6 +46,40 @@ exports.createProfile = function(username, record, callBack) {
 	});
 
 };
+
+exports.scanProfile = function(profile, callBack) {
+    var birth_elts = profile.Birthday.split('/')
+    var record = {};
+    record.type= "add";
+	record.id= profile.EmailAddress;
+	record.fields = {
+		birthday : new Date(birth_elts[2], birth_elts[0], birth_elts[1]),
+		city : profile.City,
+		country : profile.CountryFull,
+		email : profile.EmailAddress,
+		firstname : profile.GivenName,
+		gender : profile.Gender,
+		height : Number(profile.Centimeters),
+		lastname : profile.Surname,
+		location : profile.Latitude+', '+profile.Longitude,
+		streetaddress : profile.StreetAddress,
+		weight : Number(profile.Kilograms),
+		zipcode : profile.ZipCode
+	}
+	var params = {
+    	contentType: 'application/json', // required
+	    documents: JSON.stringify([record]) // required
+	};
+	csd.uploadDocuments(params, function(err, data) {
+    	if (err) {
+    		console.log(err, err.stack);
+			callBack(err);
+		} else {
+        	callBack(null, "Successfully sent 1 document");
+		}
+	});
+}
+
 
 exports.getCredentials = function(login, callBack) {
   var key      = login+'/credentials.json',

@@ -15,7 +15,20 @@ context.done = function(err, message) {
 var now = new Date();
 var event = {
 	uid: "abc123",
-	timestamp: now.toISOString()
+	timestamp: now.toISOString(),
+  Gender : "male",
+  GivenName : "Pierre",
+  Surname : "Gilot",
+  StreetAddress : "67, bld du Gal Leclerc",
+  City : "Clichy",
+  ZipCode : "92110",
+  CountryFull : "France",
+  EmailAddress : "pgilot@amazon.fr",
+  Birthday : "12/01/1971",
+  Kilograms : "80",
+  Centimeters : "180",
+  Latitude : "0",
+  Longitude : "0" 
 };
 
 var mac = crypto.createHmac('sha256', "mypassword");

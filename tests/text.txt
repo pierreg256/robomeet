@@ -1,0 +1,2 @@
+Gender|GivenName|Surname|StreetAddress|City|ZipCode|CountryFull|EmailAddress|Password|Birthday|Kilograms|Centimeters|Latitude|Longitude
+male|Pierre|Gilot|37 rue Pierre Motte|SAINTE-FOY-LES-LYON|69110|France|pgilot@amazon.fr|value2|4/2/1977|99.6|175|45.644041|4.868364

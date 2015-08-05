@@ -25,7 +25,8 @@ if (!fs.existsSync(functionFile)){
 }
 
 var zip = spawn('zip', [functionZipFile, '-r', functionFile, 'lib/', 'node_modules/']);
-
+zip.stdout.on('data',function(d){console.log(''+d)});
+zip.stdout.on('error',function(d){console.log(d)});
 zip.on('close', function (code) {
 	if (code==0) {
 		lambda.getFunction({FunctionName: functionName}, function(getErr, getData){

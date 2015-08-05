@@ -18,7 +18,13 @@ exports.handler = function(event, context) {
 					if (profileErr){
 						context.fail("Unable to store profile for uid: "+event.uid);
 					} else {
-						context.succeed("")
+						users.scanProfile(event, function(scanErr, scanData){
+							if (scanErr){
+								context.fail("Unable to scan profile");
+							} else {
+								context.succeed()
+							}
+						});
 					}
 				});
 			}
