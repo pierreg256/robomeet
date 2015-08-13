@@ -1,9 +1,11 @@
-var util = require('util')
+var fs = require('fs')
+  , util = require('util')
   , https = require('https')
   , crypto = require('crypto')
   , inspect = require('util').inspect
   , events = require('events')
   , emitter = new events.EventEmitter()
+  , spawn   = require('child_process').spawn
   , remaining = ''
   ;
 
@@ -15,7 +17,30 @@ var HOST = "isrfkp4qek.execute-api.eu-west-1.amazonaws.com"
 
 var createUser = function(user, callBack){
 	var now = new Date();
-    var req = https.request({
+	var url = 'https://'+HOST+'/V1/register?username='+encodeURIComponent(user.EmailAddress)+'&password='+encodeURIComponent(user.Password)+'&timestamp='+encodeURIComponent(now.toISOString());
+	var curl = spawn('curl', ['-i', url]);
+	var response = ''
+	curl.stdout.on('data', function(d){
+		response+=d;
+	});
+	curl.on('close', function(code){
+		if ((code == 0)||(code == 3))
+			{
+				headers = response.split('\n');
+				console.log('create users: '+headers[0]);
+				code = headers[0].split(' ')[1];
+				if (code >204){
+					callBack(response);
+				} else 
+					callBack()
+			}
+		else
+			{
+				console.log('ERROR|CreateUser|curl code:'+code);
+				callBack(code);
+			}
+	});
+/*    var req = https.request({
         method: 'GET',
         host: HOST,
         path: '/V1/register?username='+encodeURIComponent(user.EmailAddress)+'&password='+encodeURIComponent(user.Password)+'&timestamp='+encodeURIComponent(now.toISOString())
@@ -36,6 +61,7 @@ var createUser = function(user, callBack){
         });
     });
     req.end();
+*/
 };
 
 
@@ -44,8 +70,32 @@ var loginUser = function(user, callBack){
     var now = new Date();
     mac.update(user.EmailAddress+uid+now.toISOString());
     var signature = mac.digest('hex');
+	var url = 'https://'+HOST+'/V1/login?uid='+uid+'&username='+encodeURIComponent(user.EmailAddress)+'&timestamp='+encodeURIComponent(now.toISOString())+'&signature='+signature;
+	var curl = spawn('curl', ['-i', url]);
+	var response = '';
+	//console.log(url);
+	curl.stdout.on('data', function(d){
+		response+=d;
+	});
+	curl.on('close', function(code){
+		if ((code == 0)||(code == 3))
+			{
+				headers = response.split('\n');
+				console.log('Login users: '+headers[0]);
+				code = headers[0].split(' ')[1];
+				if (code >204){
+					callBack(response);
+				} else 
+					callBack()
+			}
+		else
+			{
+				console.log('ERROR|CreateUser|curl code:'+code);
+				callBack(code);
+			}
+	});
 
-    var loginReq = https.request({
+/*    var loginReq = https.request({
         method: 'GET',
         host: HOST,
         path: '/V1/login?uid='+uid+'&username='+encodeURIComponent(user.EmailAddress)+'&timestamp='+encodeURIComponent(now.toISOString())+'&signature='+signature
@@ -66,13 +116,40 @@ var loginUser = function(user, callBack){
             }
         });
     });
+    console.log('https://'+HOST+loginReq.path);
     loginReq.end();
+*/
 };
 
 var updateProfile = function(user, callBack){
     var now = new Date();
     var signature = "fakesignature"
 
+	var url = 'https://'+HOST+'/V1/profiles?uid='+uid+'&timestamp='+encodeURIComponent(now.toISOString())+'&signature='+signature;
+	var curl = spawn('curl', ['-i', url, '-H', 'Content-Type: application/json', '-X', 'POST', '--data-binary', JSON.stringify(user)]);
+	var response = '';
+	curl.stdout.on('data', function(d){
+		response+=d;
+	});
+	curl.on('close', function(code){
+		if ((code == 0)||(code == 3))
+			{
+				headers = response.split('\n');
+				console.log('Update users profile: '+headers[0]);
+				code = headers[0].split(' ')[1];
+				if (code >204){
+					console.log(response);
+					callBack(response);
+				} else
+					callBack();
+			}
+		else
+			{
+				console.log('ERROR|CreateUser|curl code:'+code);
+				callBack(code);
+			}
+	});
+/*
     var profileReq = https.request({
         method: 'POST',
         host: HOST,
@@ -100,15 +177,16 @@ var updateProfile = function(user, callBack){
     });
     profileReq.write(JSON.stringify(user));
     profileReq.end();
+    */
 };
 
 
 
 
 
-emitter.on('lineReady', function(line){
+//emitter.on('lineReady', function(line){
 	//process.stdout.write(line);
-
+var handler = function(line, callBack){
 	line = line.replace('\r','');
 
 	if (line.charAt(0)=='G')
@@ -136,27 +214,34 @@ emitter.on('lineReady', function(line){
 
 
 	createUser(profile, function(err){
-	    if (err)
+	    if (err) {
 	        console.log(err);
+	        callBack(err);
+	    }
 	    else
 	        loginUser(profile, function(loginErr, loginData){
-	            if (loginErr)
+	            if (loginErr) {
 	                console.log(loginErr);
+	                callBack(err);
+	            }
 	            else
 	                updateProfile(profile, function(profileErr, profileData){
 	                    if (profileErr) {
 	                        console.log(profileErr);
+	                        callBack(profileErr);
 	                    } else{
 	                        console.log("success!");
+	                        callBack();
 	                    };
 	                });
 	        });
 	});
 
-});
+};
 
 
 // fires on every block of data read from stdin
+/*
 process.stdin.on('data', function(chunk) {
 	var capture = chunk.split('\n');
 
@@ -181,4 +266,36 @@ process.stdin.setEncoding('utf8');
 
 // resume STDIN - paused by default
 process.stdin.resume();
+*/
+var lines=[];
+var index = 1;
 
+var func = function(callBack){
+	console.log(lines[index]);
+	handler(lines[index], function(err, data){
+		if (err) {
+			console.log(err);
+			callBack(err);
+		}
+		else{
+			index++;
+			if (index>lines.length) {
+				callBack();
+			} else {
+				func(callBack)
+			}
+		}
+	});
+}
+
+fs.readFile('./users.txt', {encoding:'utf8'}, function (err, data) {
+  if (err) throw err;
+  else {
+	  lines = data.split('\n');
+	  console.log(lines.length);
+	  var index = 1;
+	  func(function(err, data){
+	  	if (err) {console.log('error occurred')} else{console.log('total success')};
+	  });
+  }
+});

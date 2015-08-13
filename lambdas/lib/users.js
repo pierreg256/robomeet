@@ -44,7 +44,26 @@ exports.createProfile = function(username, record, callBack) {
 	  callBack();
 	}
 	});
+};
 
+exports.getProfile = function(username, callBack) {
+	var params = {
+		Bucket: utils.config.users_bucket, 
+		Key: username+profileSuffix
+	};
+	s3.getObject(params, function(err, data) {
+		if (err) {
+		  console.log(err, err.stack); // an error occurred
+		  callBack(err);
+		} else {
+			var result = JSON.parse(data.Body.toString('utf8'));
+			delete result.uid;
+			delete result.signature;
+			delete result.timestamp;
+			delete result.toto;
+		  	callBack(null, result);
+		}
+	});
 };
 
 exports.scanProfile = function(profile, callBack) {

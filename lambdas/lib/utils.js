@@ -21,8 +21,12 @@ exports.signSrting = function(strToSign, password) {
 }
 
 exports.config = {
+    region: 'eu-west-1',
 	users_bucket : 'robomeet',
 	devices_table : 'robomeet_devices',
 	lambda_exec_role : "arn:aws:iam::530131689009:role/robomeet_lambda_execution_role",
-	lambda_invoke_role : ""
+	lambda_invoke_role : "",
+    developer_provider_name : "login.pgt.com",
+    identity_pool_id : "eu-west-1:a1c57c1c-17c6-43ab-9e6d-995c01e78f66",
+    search_endpoint : "search-skin-of-sorrow-44fz4hrlhyf2mrxg6ufx77n35q.eu-west-1.cloudsearch.amazonaws.com"
 }
