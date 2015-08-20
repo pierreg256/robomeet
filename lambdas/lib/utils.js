@@ -23,7 +23,8 @@ exports.signSrting = function(strToSign, password) {
 exports.config = {
     region: 'eu-west-1',
 	users_bucket : 'robomeet',
-	devices_table : 'robomeet_devices',
+    devices_table : 'robomeet_devices',
+    messages_table : 'robomeet_conversations',
 	lambda_exec_role : "arn:aws:iam::530131689009:role/robomeet_lambda_execution_role",
 	lambda_invoke_role : "",
     developer_provider_name : "login.pgt.com",

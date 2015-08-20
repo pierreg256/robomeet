@@ -5,10 +5,15 @@ var aws = require('aws-sdk')
   		region: 'eu-west-1',
 		endpoint: 'doc-skin-of-sorrow-44fz4hrlhyf2mrxg6ufx77n35q.eu-west-1.cloudsearch.amazonaws.com'
 	})
+  , DOC = require("dynamodb-doc")
+  , dynamo = new aws.DynamoDB({region:'eu-west-1'})
+  , docClient = new DOC.DynamoDB(dynamo)
+  , inspect = require('util').inspect
   ;
 
   var credentialsSuffix = '/credentials.json'
-    , profileSuffix = '/profile.json';
+    , profileSuffix = '/profile.json'
+    , messagesSuffix = '/inbox/';
 
   exports.create = function(username, password, callBack){
 	  var params = {
@@ -27,6 +32,30 @@ var aws = require('aws-sdk')
 	    }
 	  });
   };
+
+exports.getConversation = function(from, to, callBack){
+
+};
+
+exports.sendMessage = function(from, rcptTo, timestamp, message, callBack) {
+	from = from.toString().toLowerCase();
+	rcptTo = rcptTo.toString().toLowerCase();
+	var conversationId = (from<rcptTo?from+'+'+rcptTo:rcptTo+'+'+from);	
+	message.conversationId = conversationId;
+	message.timestamp = timestamp
+	var params = {
+		TableName : utils.config.messages_table,
+		Item: message
+	};
+	docClient.putItem(params, function(err, data){
+		if (err){
+			console.log(err)
+			callBack("Unable to save message in conversation: "+conversationId);
+		} else {
+			callBack(null, data);
+		}
+	});
+};
 
 exports.createProfile = function(username, record, callBack) {
 	var params = {
@@ -72,7 +101,7 @@ exports.scanProfile = function(profile, callBack) {
     record.type= "add";
 	record.id= profile.EmailAddress;
 	record.fields = {
-		birthday : new Date(birth_elts[2], birth_elts[0], birth_elts[1]),
+		birthday : profile.Birthday, //new Date(birth_elts[2], birth_elts[0], birth_elts[1]),
 		city : profile.City,
 		country : profile.CountryFull,
 		email : profile.EmailAddress,

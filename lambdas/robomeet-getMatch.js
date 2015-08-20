@@ -40,7 +40,7 @@ getToken = function(logins, identityId, callBack){
 
 findMatching = function(record, callBack){
     var params = {
-        query: "matchall", /* required */
+        query: "(not email:'"+record.username+"')", /* required */
         expr: "{'distance':'haversin("+record.latitude+","+record.longitude+",location.latitude,location.longitude)','age':'(_time-birthday)/1000/3600/24/365.25'}",
         partial: true,
         queryParser: 'structured',
@@ -48,6 +48,8 @@ findMatching = function(record, callBack){
         size: 50,
         sort: 'distance asc',
     };
+    console.log(inspect(record, {colors:true}));
+    console.log(inspect(params, {colors:true}));
     csd.search(params, function(err, data) {
         if (err) {
             console.log(err, err.stack); // an error occurred
@@ -76,11 +78,31 @@ exports.handler = function(event, context) {
             if (userErr){
               context.fail("Unable to find user: "+username);
             } else {
+              console.log(inspect(deviceData,{colors:true}));
+              event.username = deviceData.username;
               findMatching(event, function(matchErr, matchData){
                 if (matchErr) {
                   context.fail("Unable to fetch matching users");
                 } else{
-                  context.succeed(matchData);
+                  // prepare the results before sending:
+                  var result = [];
+                  matchData.forEach(function(match){
+                    var matchRecord = {
+                      Birthday     : match.fields.birthday[0],
+                      Centimeters  : undefined,
+                      EmailAddress : match.id,
+                      Gender       : match.fields.gender[0],
+                      GivenName    : match.fields.firstname[0],
+                      Kilograms    : undefined,
+                      Latitude     : match.fields.location[0].split(',')[0],
+                      Longitude    : match.fields.location[0].split(',')[1],
+                      Surname      : match.fields.lastname[0],
+                      Age          : Math.floor(match.exprs.age),
+                      Distance     : match.exprs.distance
+                    };
+                    result.push(matchRecord);
+                  })
+                  context.succeed(result);
                 };
               })
             }

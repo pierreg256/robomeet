@@ -26,8 +26,10 @@ exports.handler = function(event, context) {
 						console.log("Signature is valid");
 						users.getProfile(credData.username, function(profileErr, profileData){
 							if (profileErr) {
-								context.fail("Unable to fetch profile for user: "+credData.username);
+								//context.fail("Unable to fetch profile for user: "+credData.username);
+								context.succeed({"EmailAddress":credData.username});
 							} else{
+								profileData.EmailAddress = credData.username;
 								context.succeed(profileData);
 							};
 						});
