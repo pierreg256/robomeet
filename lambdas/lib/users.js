@@ -57,6 +57,28 @@ exports.sendMessage = function(from, rcptTo, timestamp, message, callBack) {
 	});
 };
 
+exports.getMessages = function(from, rcptTo, timestamp, callBack) {
+	from = from.toString().toLowerCase();
+	rcptTo = rcptTo.toString().toLowerCase();
+	var conversationId = (from<rcptTo?from+'+'+rcptTo:rcptTo+'+'+from);	
+	var params = {
+		TableName : utils.config.messages_table,
+		//Key: {conversationId: conversationId, timestamp:""}
+		KeyConditions : [docClient.Condition("conversationId", "EQ", conversationId)/*,
+                        docClient.Condition("timestamp", "GT", "2015-08-20T09:16:15Z")*/]
+
+	};
+	console.log(inspect(params, {colors:true}));
+	docClient.query(params, function(err, data){
+		if (err){
+			console.log(err)
+			callBack("Unable to get messages for conversation: "+conversationId);
+		} else {
+			callBack(null, data);
+		}
+	});
+};
+
 exports.createProfile = function(username, record, callBack) {
 	var params = {
 		Bucket: utils.config.users_bucket, 
